@@ -100,7 +100,7 @@ class Moondream:
     CATEGORY = "Hangover"
 
     def extract_floats(self, text):
-        pattern = r"\[\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*\]"
+        pattern = r"\[\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\]"
         match = re.search(pattern, text)
         if match:
             return [float(num) for num in match.groups()]
@@ -110,14 +110,14 @@ class Moondream:
         floats = self.extract_floats(text)
         if floats is not None:
             x1, y1, x2, y2 = floats
-            x1 = int(x1)
-            y1 = int(y1)
-            x2 = int(x2)
-            y2 = int(y2)
+            x1 = int(x1 * image_width)
+            y1 = int(y1 * image_height)
+            x2 = int(x2 * image_width)
+            y2 = int(y2 * image_height)
             width = x2 - x1
             height = y2 - y1
-            print(f"[Moondream] Extracted bbox: x1={x1}, y1={y1}, width={width}, height={height}")
-            return (x1, y1, width, height)
+            print(f"[Moondream] Extracted bbox: x={x1}, y={y1}, width={width}, height={height}")
+            return [x1, y1, width, height]
         print("[Moondream] Failed to extract bbox from text")
         return None
 
