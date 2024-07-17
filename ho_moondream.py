@@ -107,13 +107,13 @@ class Moondream:
         return None
 
     def extract_bbox(self, text):
-        bbox = None
         floats = self.extract_floats(text)
         if floats is not None:
-            x1, y1, x2, y2 = floats
-            # Convert float coordinates to integers
-            bbox = (int(x1), int(y1), int(x2), int(y2))
-        return bbox
+            x1, y1, x2, y2 = map(int, floats)  # Convert to integers
+            width = x2 - x1
+            height = y2 - y1
+            return (x1, y1, width, height)
+        return None
 
     def interrogate(self, image:torch.Tensor, prompt:str, separator:str, model_revision:str, temperature:float, device:str, trust_remote_code:bool):
         if not trust_remote_code:
@@ -176,12 +176,12 @@ class Moondream:
                     if bbox:
                         # Ensure bbox coordinates are within image boundaries
                         width, height = img.size
-                        x1, y1, x2, y2 = bbox
-                        x1 = max(0, min(x1, width - 1))
-                        y1 = max(0, min(y1, height - 1))
-                        x2 = max(0, min(x2, width - 1))
-                        y2 = max(0, min(y2, height - 1))
-                        bbox = (x1, y1, x2, y2)
+                        x_min, y_min, box_width, box_height = bbox
+                        x_min = max(0, min(x_min, width - 1))
+                        y_min = max(0, min(y_min, height - 1))
+                        box_width = min(box_width, width - x_min)
+                        box_height = min(box_height, height - y_min)
+                        bbox = (x_min, y_min, box_width, box_height)
                     bboxes.append(bbox)
                 descriptions += f"{descr[0:-len(sep)]}\n"
         except RuntimeError:
