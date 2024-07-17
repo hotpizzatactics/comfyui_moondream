@@ -210,7 +210,17 @@ class BboxToMask:
     CATEGORY = "Hangover"
 
     def bbox_to_mask(self, image, bbox):
-        if bbox is None or len(bbox) != 4:
+        # Handle case where bbox is None or an empty list
+        if bbox is None or (isinstance(bbox, list) and len(bbox) == 0):
+            # Return an empty mask
+            c, h, w = image.shape
+            return (torch.zeros((1, h, w), dtype=torch.float32),)
+
+        # If bbox is a list of bboxes, take the first one
+        if isinstance(bbox, list):
+            bbox = bbox[0]
+
+        if not isinstance(bbox, tuple) or len(bbox) != 4:
             raise ValueError("Invalid bbox format. Expected (x, y, width, height)")
 
         x, y, width, height = bbox
@@ -220,6 +230,12 @@ class BboxToMask:
         
         # Create an empty mask
         mask = torch.zeros((h, w), dtype=torch.float32)
+        
+        # Ensure coordinates are within image boundaries
+        x = max(0, min(int(x), w-1))
+        y = max(0, min(int(y), h-1))
+        width = max(0, min(int(width), w-x))
+        height = max(0, min(int(height), h-y))
         
         # Set the bbox region to 1
         mask[y:y+height, x:x+width] = 1.0
