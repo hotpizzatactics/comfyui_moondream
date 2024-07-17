@@ -18,6 +18,7 @@ import codecs
 import subprocess
 import os
 import requests
+import re
 
 def Run_git_status(repo:str) -> list[str]:
     """resturns a list of all model tag references for this huggingface repo"""
@@ -92,11 +93,26 @@ class Moondream:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("description",)
+    RETURN_TYPES = ("STRING", "BBOX")
+    RETURN_NAMES = ("description", "bbox")
     FUNCTION = "interrogate"
     OUTPUT_NODE = False
     CATEGORY = "Hangover"
+
+    def extract_floats(self, text):
+        pattern = r"\[\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*\]"
+        match = re.search(pattern, text)
+        if match:
+            return [float(num) for num in match.groups()]
+        return None
+
+    def extract_bbox(self, text):
+        bbox = None
+        floats = self.extract_floats(text)
+        if floats is not None:
+            x1, y1, x2, y2 = floats
+            bbox = (x1, y1, x2, y2)
+        return bbox
 
     def interrogate(self, image:torch.Tensor, prompt:str, separator:str, model_revision:str, temperature:float, device:str, trust_remote_code:bool):
         if not trust_remote_code:
@@ -140,6 +156,7 @@ class Moondream:
             self.device = device
 
         descriptions = ""
+        bboxes = []
         prompts = list(filter(lambda x: x!="", [s.lstrip() for s in prompt.splitlines()])) # make a prompt list and remove unnecessary whitechars and empty lines
         if len(prompts) == 0:
             prompts = [""]
@@ -154,9 +171,11 @@ class Moondream:
                 for p in prompts:
                     answer = self.model.answer_question(enc_image, p, self.tokenizer, temperature=temperature, do_sample=do_sample)
                     descr += f"{answer}{sep}"
+                    bbox = self.extract_bbox(answer)
+                    bboxes.append(bbox)
                 descriptions += f"{descr[0:-len(sep)]}\n"
         except RuntimeError:
             raise ValueError(f"[Moondream] Please check if the tramsformer package fulfills the requirements. "
                                   "Also note that older models might not work anymore with newer packages.")
         
-        return(descriptions[0:-1],)
+        return (descriptions[0:-1], bboxes)
