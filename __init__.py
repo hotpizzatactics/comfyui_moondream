@@ -1,5 +1,5 @@
 from .ho_moondream import Moondream
-from .ho_bboxtomask import BboxToMask
+from .ho_moondream import BboxToMask
 
 # A dictionary that contains all nodes you want to export with their names
 # NOTE: names should be globally unique
