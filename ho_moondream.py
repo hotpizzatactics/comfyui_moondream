@@ -110,14 +110,15 @@ class Moondream:
         floats = self.extract_floats(text)
         if floats is not None:
             x1, y1, x2, y2 = floats
-            # Scale normalized coordinates to image dimensions
-            x1 = int(x1 * image_width)
-            y1 = int(y1 * image_height)
-            x2 = int(x2 * image_width)
-            y2 = int(y2 * image_height)
+            x1 = int(x1)
+            y1 = int(y1)
+            x2 = int(x2)
+            y2 = int(y2)
             width = x2 - x1
             height = y2 - y1
+            print(f"[Moondream] Extracted bbox: x1={x1}, y1={y1}, width={width}, height={height}")
             return (x1, y1, width, height)
+        print("[Moondream] Failed to extract bbox from text")
         return None
 
     def interrogate(self, image:torch.Tensor, prompt:str, separator:str, model_revision:str, temperature:float, device:str, trust_remote_code:bool):
