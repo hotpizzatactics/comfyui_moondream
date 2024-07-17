@@ -106,10 +106,15 @@ class Moondream:
             return [float(num) for num in match.groups()]
         return None
 
-    def extract_bbox(self, text):
+    def extract_bbox(self, text, image_width, image_height):
         floats = self.extract_floats(text)
         if floats is not None:
-            x1, y1, x2, y2 = map(int, floats)  # Convert to integers
+            x1, y1, x2, y2 = floats
+            # Scale normalized coordinates to image dimensions
+            x1 = int(x1 * image_width)
+            y1 = int(y1 * image_height)
+            x2 = int(x2 * image_width)
+            y2 = int(y2 * image_height)
             width = x2 - x1
             height = y2 - y1
             return (x1, y1, width, height)
@@ -166,16 +171,16 @@ class Moondream:
             for im in image:
                 i = 255. * im.cpu().numpy()
                 img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+                width, height = img.size
                 enc_image = self.model.encode_image(img)
                 descr = ""
                 sep = codecs.decode(separator, 'unicode_escape')
                 for p in prompts:
                     answer = self.model.answer_question(enc_image, p, self.tokenizer, temperature=temperature, do_sample=do_sample)
                     descr += f"{answer}{sep}"
-                    bbox = self.extract_bbox(answer)
+                    bbox = self.extract_bbox(answer, width, height)
                     if bbox:
                         # Ensure bbox coordinates are within image boundaries
-                        width, height = img.size
                         x_min, y_min, box_width, box_height = bbox
                         x_min = max(0, min(x_min, width - 1))
                         y_min = max(0, min(y_min, height - 1))
