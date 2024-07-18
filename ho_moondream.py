@@ -114,8 +114,16 @@ class Moondream:
             y1 = int(y1 * image_height)
             x2 = int(x2 * image_width)
             y2 = int(y2 * image_height)
-            width = x2 - x1
-            height = y2 - y1
+            
+            # Ensure coordinates are within image boundaries
+            x1 = max(0, min(x1, image_width - 1))
+            y1 = max(0, min(y1, image_height - 1))
+            x2 = max(0, min(x2, image_width - 1))
+            y2 = max(0, min(y2, image_height - 1))
+            
+            width = max(0, x2 - x1)
+            height = max(0, y2 - y1)
+            
             print(f"[Moondream] Extracted bbox: x={x1}, y={y1}, width={width}, height={height}")
             return [x1, y1, width, height]
         print("[Moondream] Failed to extract bbox from text")
