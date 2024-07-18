@@ -227,7 +227,7 @@ class BboxToMask:
             bbox = bbox[0]
 
         if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
-            raise ValueError("Invalid bbox format. Expected [x, y, width, height]")
+            raise ValueError("Invalid bbox format. Expected [x, y, width, height] format")
 
         x, y, width, height = map(int, bbox)  # Ensure all values are integers
         
